@@ -1,0 +1,2 @@
+An interactive dendrogram -- click a node to collapse/uncollapse it.
+Hovering over a node would highlight that node as well as all its parent nodes.

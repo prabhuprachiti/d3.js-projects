@@ -1,0 +1,1 @@
+Just a normal scatter plot of the same data represented on different scales and in different ways.

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<h1>Game of Thrones House-Wise Appearances</h1>
+<h2></h2>
+<style>
+h2 {
+    position: absolute;
+    left: 480px;
+    top: 30px;
+}
+
+body {
+  font: 10px sans-serif;
+}
+
+.label {
+  font-size: 14px;
+  
+}
+
+.axis path,
+.axis line {
+  display: none;
+  stroke: #000;
+}
+
+.axis {
+font-size: 14px;
+}
+
+</style>
+<body>
+<script src="../lib/d3.v3.min.js"></script>
+
+<script>
+
+var margin = {top: 20, right: 150, bottom: 100, left: 100},
+    width = 1000 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+	
+var gridSize = 75; //size of each tile
+	
+//making the svg canvas
+var svg = d3.select("body")
+	.append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+	.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+var legTitle = svg.append("text") //the legend title
+					  .attr("class", "label")
+					  .attr("x", width + 50)
+					  .attr("y", -10)
+					  .text("Appearances");
+	  
+	  
+//creating the scales
+	  
+var xScale = d3.scale.linear()
+				.domain ([1, 10])
+				.range([1, width-15]);
+				
+var xAxisScale=d3.scale.linear()
+				.domain([1,10])
+				.range([0, width]);
+
+		
+var yScale = d3.scale.ordinal()
+				.domain(["Baratheon", "Greyjoy", "Lannister", "Stark", "Targaryen", "Tyrell"])
+				.rangeBands([0, height]);
+
+//X axis				
+var xAxis = d3.svg.axis()
+				.scale(xAxisScale)
+				.orient("bottom")
+				
+	svg.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(30," + height + ")")
+      .call(xAxis)
+    .append("text")
+      .attr("class", "label")
+	  .attr("y", 50)
+	  .attr("x", 350)
+      .attr("text-anchor", "middle")
+      .text("Episode");
+
+//Y Axis
+var yAxis = d3.svg.axis()
+				.scale (yScale)
+				.orient("left")
+  
+  svg.append("g")
+      .attr("class", "axis")
+	  .call(yAxis)
+    .append("text")
+      .attr("class", "label")
+      .style("text-anchor", "middle")
+      .attr("transform", "rotate(-90)")
+	  .attr("x", -200)
+	  .attr("y", -80)
+      .text("House");				
+				
+d3.csv("heatmap.csv", function(data) {
+
+  data.forEach(function(d) { //converting to numbers
+  
+    d.Baratheon = +d.Baratheon;
+    d.Greyjoy = +d.Greyjoy;
+	d.Lannister = +d.Lannister;
+	d.Stark = +d.Stark;
+	d.Targaryen = +d.Targaryen;
+	d.Tyrell = +d.Tyrell;
+	d.episode = +d.episode;
+	d.season = +d.season;
+	
+  });
+  
+  var houses = ["Baratheon", "Greyjoy", "Lannister", "Stark", "Targaryen", "Tyrell"];
+  
+  var episodeNumber = [];
+  
+  data.forEach(function(d) {
+  
+	if (d.season == 1) { //getting the number of episodes
+						episodeNumber.push(d.episode); 
+					};
+	
+  });
+  var seasonOne = [];
+  var seasonTwo = [];
+  var seasonThree = [];
+  var seasonFour = [];
+  var seasonFive = [];
+  var seasonSix = [];
+
+  houses.forEach(function(house){ //making separate arrays for each of the seasons containing data for house, episode and appearance
+	data.forEach(function(d) {
+		for (i = 1; i <= episodeNumber.length; i++) { 
+			if(d.episode == i && d.season == 1){
+	
+				seasonOne.push({
+				house: house,
+				episode: i,
+				appearance: d[house]
+				
+				});
+
+			}
+			
+			else if (d.episode == i && d.season == 2){
+			
+				seasonTwo.push({
+				house: house,
+				episode: i,
+				appearance: d[house]
+				
+				});
+				
+			}
+				
+			else if (d.episode == i && d.season == 3){
+			
+				seasonThree.push({
+				house: house,
+				episode: i,
+				appearance: d[house]
+				
+				});
+
+			}
+			
+			else if (d.episode == i && d.season == 4){
+			
+				seasonFour.push({
+				house: house,
+				episode: i,
+				appearance: d[house]
+				
+				});
+
+			}
+			
+			else if (d.episode == i && d.season == 5){
+			
+				seasonFive.push({
+				house: house,
+				episode: i,
+				appearance: d[house]
+				
+				});
+
+			}
+			
+			else if (d.episode == i && d.season == 6){
+			
+				seasonSix.push({
+				house: house,
+				episode: i,
+				appearance: d[house]
+				
+				});
+
+			};
+			
+		};	
+	
+	});
+  });
+  
+		
+	var drawHeatmap = function(season) {	//function to draw the heatmap, takes the array of a particular season as the input
+		
+		var appear = [];
+		season.forEach(function (d) {
+		appear.push(d.appearance)
+		});
+		
+		var max=d3.max(appear); //getting the max number of appearances for anyone in a particular season
+		
+		var zScale = d3.scale.quantile() //quantile scale for assigning the colours corresponding to the appearance
+				.domain([0, max])
+				.range(["#f7fcf0", "#e0f3db", "#ccebc5", "#a8ddb5", "#7bccc4", "#4eb3d3", "#2b8cbe", "#0868ac", "#084081"]); //colours from colorbrewer
+		
+		var heatmap= svg.selectAll(".rect") //making the heatmap
+			  .data(season);
+			  
+			heatmap.enter()
+				.append("g")
+				.append("rect")
+					.attr("width", gridSize)
+					.attr("height", gridSize)
+					.attr('transform',function(d){ return "translate("+xScale(d.episode)+","+yScale(d.house)+")"; }) //transforming each tile to its correct position
+					.style("fill", function(d) { return zScale(d.appearance); }); //colouring each tile based on the frequency of the appearance
+	  
+	  
+	}
+	
+	var createLegend = function (season) { //function to create the legend, takes the array of a particular season as the input
+	
+		var appear = [];
+			season.forEach(function (d) {
+			appear.push(d.appearance) //getting an array for the appearances of all the houses in the season
+			});
+		
+		var max=d3.max(appear); //getting the max of the appearance for anyone in that season, to create the upper limit of the domain
+		
+		var zScale = d3.scale.quantile()
+				.domain([0, max])
+				.range(["#f7fcf0", "#e0f3db", "#ccebc5", "#a8ddb5", "#7bccc4", "#4eb3d3", "#2b8cbe", "#0868ac", "#084081"]); //colours from colorbrewer
+	  
+		var colours = ["#f7fcf0", "#e0f3db", "#ccebc5", "#a8ddb5", "#7bccc4", "#4eb3d3", "#2b8cbe", "#0868ac", "#084081"]
+	  
+		var legend = svg.selectAll(".legend") //making the legend for the threshold of the appearances
+				.data([0].concat(zScale.quantiles()), function(d) { return d; }) // concatenates the quantiles produced to "0" so as to give pass the quantile values as data for the legend, the first being "0" inspired from: http://bl.ocks.org/ilanman/9598445
+              
+			legend.enter()
+				.append("g")
+				.attr("class", "legend");
+
+			legend.append("rect")
+				.attr("width", 35)
+				.attr("height", 35)
+				.attr ("transform",function(d, i){ return "translate(825,"+i * 40+")"; })
+				.style("fill", function(d, i) { return colours[i]; }); //making the tiles of various colours in the heatmap
+				
+
+			legend.append("text")
+				.attr("class", "label")
+				.text(function(d) { return Math.round(d); }) //appending the values of threshold
+				.attr ("transform",function(d, i){ return "translate(870,"+(i * 40 + 10)+")"; });
+			
+			legend.exit().remove(); //removing the legend
+
+	  };
+	  
+	  drawHeatmap(seasonOne); //creating the season one heatmap by default
+	  createLegend(seasonOne); // creating the season one legend by default
+
+	//making the drop down selection box
+	var data = ["Season 1", "Season 2", "Season 3", "Season 4", "Season 5", "Season 6"];
+	var select = d3.select("h2")
+				.append("select")
+					.on("change",selectSeason) //on selecting a particular season call the function "selectSeason"
+
+	var options = select
+				.selectAll("option")
+				.data(data);
+		options.enter()
+				.append("option")
+					.text(function (d) { return d; });
+
+	function selectSeason() { //function to allow the user to select the season to render the heatmap
+		var selectValue = d3.select("select")
+							.property("value");
+		
+		if (selectValue == "Season 1"){
+		drawHeatmap(seasonOne);
+		createLegend(seasonOne);
+		}
+		else if (selectValue == "Season 2"){
+		drawHeatmap(seasonTwo);
+		createLegend(seasonTwo);
+		}
+		else if (selectValue == "Season 3") {
+		drawHeatmap(seasonThree);
+		createLegend(seasonThree);
+		}
+		else if (selectValue == "Season 4") {
+		drawHeatmap(seasonFour);
+		createLegend(seasonFour);
+		}
+		else if (selectValue == "Season 5") {
+		drawHeatmap(seasonFive);
+		createLegend(seasonFive);
+		}
+		else if (selectValue == "Season 6") {
+		drawHeatmap(seasonSix);
+		createLegend(seasonSix);
+		};
+	
+
+	};  	
+});
+</script>

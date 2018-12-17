@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+            font-family: "Arial", sans-serif;
+        }
+        
+.bar {
+            fill: blue;
+        }
+		
+.bar:hover {
+
+			fill : green;
+
+        }
+        
+.axis {
+            font-size: 10px;
+			
+        }
+        
+.axis path,
+.axis line {
+            fill: none;
+            display: none;
+        }
+        
+.revenue {
+            font-size: 10px;
+			fill: white;
+			
+        }
+
+.axis2 {
+            font-size: 10px;
+			
+        }
+        
+.axis2 path,
+.axis2 line {
+            fill: none;
+			stroke: black;
+        }
+		
+path {
+				stroke: steelblue;
+				stroke-width: 1;
+				fill: none;
+			}
+			
+	
+.label2 {
+			font-size: 10px;
+			}
+
+
+.transformer, .harry, .mission, .fast, .hunger, .pirates {
+position: absolute;
+top: 100px
+height: 50;
+width: 50;
+left: 1000px;
+}
+
+</style>
+<body>
+<script src="../lib/d3.v3.min.js"></script>
+<script>
+
+var data=[
+	{franchise:'Harry Potter', revenue: {1:974, 2:878, 3:796, 4:896, 5:942, 6:935, 7:960, 8:1341 }},
+	{franchise:'Transformers', revenue: {1:708, 2:836, 3:1123, 4:1104, 5:603 }},
+	{franchise:'Mission Impossible', revenue: {1:457, 2:549, 3:397, 4:694, 5:700 }},
+	{franchise:'Fast and the Furious', revenue: {1:206, 2:236, 3:363, 4:363, 5:629, 6:789, 7:1516, 8:1237 }},
+	{franchise:'Hunger Games', revenue: {1:677, 2:864, 3:766, 4:650 }},
+	{franchise:'Pirates of the Caribbean', revenue: {1:634, 2:1066, 3:963, 4:1045, 5:794 }}
+];
+
+var finalData = [];
+var movie = [];
+var totalSum = [];
+var hp = [];
+var tr = [];
+var mi = [];
+var ff = [];
+var hg = [];
+var pc = [];
+
+data.forEach(function(d){
+	var sumRev = [];
+	sumRev.push(d.revenue)
+	sumRev=Object.values(sumRev[0])
+	var sum=d3.sum(sumRev);
+
+	finalData.push({ //making an array containing the data for the name of the movie and its corresponding sum of revenues for all the installments
+				movie: d.franchise,
+				sum: sum
+			});
+
+	//making separate arrays for individual movie names and the total revenue
+	movie.push(d.franchise); 
+	totalSum.push(sum);
+	
+	//creating separate arrays for each of the movies holding data for revenues of each of the installments
+	if (d.franchise == "Harry Potter"){
+		hp.push(sumRev);
+	}
+	else if (d.franchise == "Transformers"){
+		tr.push(sumRev);
+	}
+	else if (d.franchise == "Mission Impossible"){
+		mi.push(sumRev);
+	}
+	else if (d.franchise == "Fast and the Furious"){
+		ff.push(sumRev);
+	}
+	else if (d.franchise == "Hunger Games"){
+		hg.push(sumRev);
+	}
+	else if (d.franchise == "Pirates of the Caribbean"){
+		pc.push(sumRev);
+	}
+});
+	
+</script>
+</div>
+
+<div id=barchart>
+<script>
+//setting up the svg canvas for the bar chart
+var margin = {top: 10, right: 100, bottom: 10, left: 120};
+
+var width = 1000 - margin.left - margin.right;
+var height = 500 - margin.top - margin.bottom;
+
+var svg = d3.select("body")
+			.append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");		
+			
+//setting up the scales
+var xScale = d3.scale.linear()
+	.domain([0, d3.max(totalSum, function (d) { return d;})])
+	.range([0, width]);
+	
+var yScale = d3.scale.ordinal() //ordinal scale to hold data for the names of the movies 
+	.domain(movie, function (d) {return d;})
+	.rangeRoundBands([0, height], .4); //spacing of 0.4 between the individual bars
+
+//Y axis
+var yAxis = d3.svg.axis()
+	.scale(yScale)
+	.orient("left");
+
+svg.append("g")
+	.attr("class", "Y axis")
+	.call(yAxis)
+
+//getting the bars
+var bars = svg.selectAll(".bar")
+	.data(finalData)
+	.enter()
+	.append("g")
+
+bars.append("rect")
+	.attr("class", "bar")
+	.attr("x", 0)
+	.attr("y", function (d) {
+		return yScale(d.movie);
+	})
+	.attr("height", yScale.rangeBand())
+	.attr("width", function (d) {
+		return xScale(d.sum);
+	})
+
+//getting the text, i.e. the total revenue to be appended inside the bar chart
+bars.append("text")
+	.attr("class", "revenue")
+	.attr("x", 10)
+	.attr("y", function (d) {
+		return (yScale(d.movie)+ 27);})
+	.text(function (d) {
+		return "$" + d.sum;});
+
+bars.on('mouseover', mouseover) //calling the mouseover function on hovering over a particular bar
+	.on('mouseout', mouseout); //calling the mouseout function on hovering out of a particular bar
+
+
+function mouseover (d) { //displaying the line chart for the movie for which the bar chart was hovered on
+		d3.select (this)
+		if (d.movie == "Harry Potter"){
+		d3.select("#theLinehp").style("display", "inline");
+		d3.select("#thexAxishp").style("display", "inline");
+		d3.select("#theyAxishp").style("display", "inline");
+		}
+		else if (d.movie == "Transformers"){
+		d3.select("#theLinetr").style("display", "inline");
+		d3.select("#thexAxistr").style("display", "inline");
+		d3.select("#theyAxistr").style("display", "inline");
+		}
+		else if (d.movie == "Mission Impossible"){
+		d3.select("#theLinemi").style("display", "inline");
+		d3.select("#thexAxismi").style("display", "inline");
+		d3.select("#theyAxismi").style("display", "inline");
+		}
+		else if (d.movie == "Fast and the Furious"){
+		d3.select("#theLineff").style("display", "inline");
+		d3.select("#thexAxisff").style("display", "inline");
+		d3.select("#theyAxisff").style("display", "inline");
+		}
+		else if (d.movie == "Hunger Games"){
+		d3.select("#theLinehg").style("display", "inline");
+		d3.select("#thexAxishg").style("display", "inline");
+		d3.select("#theyAxishg").style("display", "inline");
+		}
+		else if (d.movie == "Pirates of the Caribbean"){
+		d3.select("#theLinepc").style("display", "inline");
+		d3.select("#thexAxispc").style("display", "inline");
+		d3.select("#theyAxispc").style("display", "inline");
+		};
+		};
+		
+function mouseout (d) { //hiding the barchart on hovering out the mouse
+		d3.select (this)
+		if (d.movie == "Harry Potter"){
+		d3.select("#theLinehp").style("display", "none");
+		d3.select("#thexAxishp").style("display", "none");
+		d3.select("#theyAxishp").style("display", "none");
+		}
+		else if (d.movie == "Transformers"){
+		d3.select("#theLinetr").style("display", "none");
+		d3.select("#thexAxistr").style("display", "none");
+		d3.select("#theyAxistr").style("display", "none");
+		}
+		else if (d.movie == "Mission Impossible"){
+		d3.select("#theLinemi").style("display", "none");
+		d3.select("#thexAxismi").style("display", "none");
+		d3.select("#theyAxismi").style("display", "none");
+		}
+		else if (d.movie == "Fast and the Furious"){
+		d3.select("#theLineff").style("display", "none");
+		d3.select("#thexAxisff").style("display", "none");
+		d3.select("#theyAxisff").style("display", "none");
+		}
+		else if (d.movie == "Hunger Games"){
+		d3.select("#theLinehg").style("display", "none");
+		d3.select("#thexAxishg").style("display", "none");
+		d3.select("#theyAxishg").style("display", "none");
+		}
+		else if (d.movie == "Pirates of the Caribbean"){
+		d3.select("#theLinepc").style("display", "none");
+		d3.select("#thexAxispc").style("display", "none");
+		d3.select("#theyAxispc").style("display", "none");
+		};
+		};
+</script>
+
+<script>
+//dimensions for the line chart
+var margin = {top:50, right:50, bottom:75, left:50}; // margins
+var width = 300 - margin.right - margin.left; // width
+var height = 300 - margin.top - margin.bottom; // height
+</script>
+
+<div id='linegraph_hp'>
+<script>
+//line chart for Harry Potter	
+var data = hp[0];
+
+//creating the scales
+var xScale = d3.scale.linear()
+	.domain([1, data.length])
+	.range([1, width]);
+
+var yScale = d3.scale.linear()
+.domain([0, d3.max(data)])
+.range([height, 0]);
+
+//creating the points for the line chart
+var lineGraph = d3.svg.line()
+
+	.x(function(d, i) { 
+		return xScale(i+1); //selecting x co-ordinate of a point
+	})
+	.y(function(d) { 
+		return yScale(d); //selecting y co-ordinate of a point 
+	})
+
+//creating the svg canvas
+var svg = d3.select("body")
+	.append("svg")
+		.attr("class", "harry")
+		.attr("width", 300)
+		.attr("height", 450)
+	.append("g")
+		.attr("transform", "translate(50, 10)");
+
+//plotting the graph		
+svg.append("path")
+	.attr("d", lineGraph(data))
+	.attr("id", "theLinehp")
+	.attr("display", "none");  //initially hiding the line chart
+	  
+	  
+//creating X axis
+var xAxis = d3.svg.axis()
+	.scale(xScale)
+	.ticks(data.length)
+	.orient("bottom");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(0," + height + ")")
+		.attr("id", "thexAxishp")
+		.attr("display", "none")  //initially hiding the X axis
+		.call(xAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate(150, "+ (margin.left-20) +")")
+		.text("Movie");
+
+
+//creating Y axis
+var yAxis = d3.svg.axis()
+	.scale(yScale)
+	.ticks(4)
+	.orient("left");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(1,0)")
+		.attr("id", "theyAxishp")
+		.attr("display", "none")  //initially hiding the Y axis
+		.call(yAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate("+ (20-margin.left) +",20)")
+		.style("text-anchor", "middle")
+		.text("Revenue");
+
+
+</script>
+</div>
+
+<div id='linegraph_tr'>
+<script>
+//line chart for Transformers
+var data = tr[0];
+
+//creating the scales
+var xScale = d3.scale.linear()
+	.domain([1, data.length])
+	.range([1, width]);
+
+var yScale = d3.scale.linear()
+	.domain([0, d3.max(data)])
+	.range([height, 0]);
+
+//creating the points for the line chart
+var lineGraph = d3.svg.line()
+
+	.x(function(d, i) { 
+		return xScale(i+1); //selecting x co-ordinate of a point
+	})
+	.y(function(d) { 
+		return yScale(d); //selecting y co-ordinate of a point 
+	})
+
+//creating the svg canvas
+var svg = d3.select("body")
+	.append("svg")
+		.attr("class", "transformer")
+		.attr("width", 300)
+		.attr("height", 450)
+	.append("g")
+		.attr("transform", "translate(50, 10)");
+
+//plotting the graph
+svg.append("path")
+	.attr("d", lineGraph(data))
+	.attr("id", "theLinetr")
+	.attr("display", "none");  //initially hiding the line chart
+	  
+	  
+//creating X axis
+var xAxis = d3.svg.axis()
+	.scale(xScale)
+	.ticks(data.length)
+	.orient("bottom");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(0," + height + ")")
+		.attr("id", "thexAxistr")
+		.attr("display", "none")  //initially hiding the X axis
+		.call(xAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate(150, "+ (margin.left-20) +")")
+		.text("Movie");
+
+
+//creating Y axis
+var yAxis = d3.svg.axis()
+	.scale(yScale)
+	.ticks(4)
+	.orient("left");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(1,0)")
+		.attr("id", "theyAxistr")
+		.attr("display", "none")  //initially hiding the Y axis
+		.call(yAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate(-30,35)")
+		.style("text-anchor", "middle")
+		.text("Revenue");
+
+
+</script>
+</div>
+
+<div id='linegraph_mi'>
+<script>
+//line chart for Mission Impossible
+var data = mi[0];
+
+//creating the scales
+var xScale = d3.scale.linear()
+	.domain([1, data.length])
+	.range([1, width]);
+
+var yScale = d3.scale.linear()
+	.domain([0, d3.max(data)])
+	.range([height, 0]);
+
+//creating the points for the line chart
+var lineGraph = d3.svg.line()
+
+	.x(function(d, i) { 
+		return xScale(i+1); //selecting x co-ordinate of a point
+	})
+	.y(function(d) { 
+		return yScale(d); //selecting y co-ordinate of a point 
+	})
+
+//creating the svg canvas
+var svg = d3.select("body")
+	.append("svg")
+		.attr("class", "mission")
+		.attr("width", 300)
+		.attr("height", 450)
+	.append("g")
+		.attr("transform", "translate(50, 10)");
+		
+//plotting the graph
+svg.append("path")
+	.attr("d", lineGraph(data))
+	.attr("id", "theLinemi")
+	.attr("display", "none"); //initially hiding the line chart
+	  
+	  
+//creating X axis
+var xAxis = d3.svg.axis()
+	.scale(xScale)
+	.ticks(data.length)
+	.orient("bottom");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(0," + height + ")")
+		.attr("id", "thexAxismi")
+		.attr("display", "none") //initially hiding the X axis
+		.call(xAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate(150, "+ (margin.left-20) +")")
+		.text("Movie");
+
+
+//creating Y axis
+var yAxis = d3.svg.axis()
+	.scale(yScale)
+	.ticks(4)
+	.orient("left");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(1,0)")
+		.attr("id", "theyAxismi")
+		.attr("display", "none") //initially hiding the Y axis
+		.call(yAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate("+ (20-margin.left) +",15)")
+		.style("text-anchor", "middle")
+		.text("Revenue");
+
+
+</script>
+</div>
+
+<div id='linegraph_ff'>
+<script>
+//line chart for Fast and the Furious
+var data = ff[0];
+
+//creating the scales
+var xScale = d3.scale.linear()
+	.domain([1, data.length])
+	.range([1, width]);
+
+var yScale = d3.scale.linear()
+	.domain([0, d3.max(data)])
+	.range([height, 0]);
+
+//creating the points for the line chart
+var lineGraph = d3.svg.line()
+
+	.x(function(d, i) { 
+		return xScale(i+1); //selecting x co-ordinate of a point
+	})
+	.y(function(d) { 
+		return yScale(d); //selecting y co-ordinate of a point 
+	})
+
+//creating the svg canvas
+var svg = d3.select("body")
+	.append("svg")
+		.attr("class", "fast")
+		.attr("width", 300)
+		.attr("height", 450)
+	.append("g")
+		.attr("transform", "translate(50, 10)");
+
+//plotting the graph		
+svg.append("path")
+	.attr("d", lineGraph(data)) 
+	.attr("id", "theLineff")
+	.attr("display", "none"); //initially hiding the line chart
+	  
+	  
+//creating X axis
+var xAxis = d3.svg.axis()
+	.scale(xScale)
+	.ticks(data.length)
+	.orient("bottom");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(0," + height + ")")
+		.attr("id", "thexAxisff")
+		.attr("display", "none") //initially hiding the X axis
+		.call(xAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate(150, "+ (margin.left-20) +")")
+		.text("Movie");
+
+
+//creating Y axis
+var yAxis = d3.svg.axis()
+.scale(yScale)
+.ticks(4)
+.orient("left");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(1,0)")
+		.attr("id", "theyAxisff") //initially hiding the Y axis
+		.attr("display", "none")
+		.call(yAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate("+ (20-margin.left) +",25)")
+		.style("text-anchor", "middle")
+		.text("Revenue");
+
+
+</script>
+</div>
+
+<div id='linegraph_hg'>
+<script>
+//line chart for Hunger Games
+var data = hg[0];
+
+//creating the scales
+var xScale = d3.scale.linear()
+	.domain([1, data.length])
+	.range([1, width]);
+
+var yScale = d3.scale.linear()
+	.domain([0, d3.max(data)])
+	.range([height, 0]);
+	
+//creating the points for the line chart
+var lineGraph = d3.svg.line()
+
+	.x(function(d, i) { 
+		return xScale(i+1); //selecting x co-ordinate of a point
+	})
+	.y(function(d) { 
+		return yScale(d); //selecting y co-ordinate of a point 
+	})
+
+//creating the svg canvas
+var svg = d3.select("body")
+	.append("svg")
+		.attr("class", "hunger")
+		.attr("width", 300)
+		.attr("height", 450)
+	.append("g")
+		.attr("transform", "translate(50, 10)");
+
+//plotting the graph
+svg.append("path")
+	.attr("d", lineGraph(data))
+	.attr("id", "theLinehg") 
+	.attr("display", "none"); //initially hiding the line chart
+	  
+	  
+//creating X axis
+var xAxis = d3.svg.axis()
+	.scale(xScale)
+	.ticks(data.length)
+	.orient("bottom");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(0," + height + ")")
+		.attr("id", "thexAxishg")
+		.attr("display", "none") //initially hiding the X axis
+		.call(xAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate(150, "+ (margin.left-20) +")")
+		.text("Movie");
+
+
+//creating Y axis
+var yAxis = d3.svg.axis()
+	.scale(yScale)
+	.ticks(4)
+	.orient("left");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(1,0)")
+		.attr("id", "theyAxishg")
+		.attr("display", "none") //initially hiding the Y axis
+		.call(yAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate("+ (20-margin.left) +",25)")
+		.style("text-anchor", "middle")
+		.text("Revenue");
+
+
+</script>
+</div>
+
+<div id='linegraph_pc'>
+<script>
+//line chart for Pirates of the Caribbean
+var data = pc[0];
+
+//creating the scales
+var xScale = d3.scale.linear()
+	.domain([1, data.length])
+	.range([1, width]);
+
+var yScale = d3.scale.linear()
+	.domain([0, d3.max(data)])
+	.range([height, 0]);
+
+//creating the points for the line chart	
+var lineGraph = d3.svg.line()
+
+	.x(function(d, i) { 
+		return xScale(i+1); //selecting x co-ordinate of a point
+	})
+	.y(function(d) { 
+		return yScale(d); //selecting y co-ordinate of a point 
+	})
+
+//creating the svg canvas
+var svg = d3.select("body")
+	.append("svg")
+		.attr("class", "pirates")
+		.attr("width", 300)
+		.attr("height", 450)
+	.append("g")
+		.attr("transform", "translate(50, 10)");
+
+//plotting the graph		
+svg.append("path")
+	.attr("d", lineGraph(data))
+	.attr("id", "theLinepc")
+	.attr("display", "none");  //initially hiding the line chart
+	  
+	  
+//creating X axis
+var xAxis = d3.svg.axis()
+	.scale(xScale)
+	.ticks(data.length)
+	.orient("bottom");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(0," + height + ")")
+		.attr("id", "thexAxispc") //initially hiding the X axis
+		.attr("display", "none")
+		.call(xAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate(150, "+ (margin.left-20) +")")
+		.text("Movie");
+
+
+//creating Y axis
+var yAxis = d3.svg.axis()
+	.scale(yScale)
+	.ticks(4)
+	.orient("left");
+
+svg.append("g")
+		.attr("class", "axis2")
+		.attr("transform", "translate(1,0)")
+		.attr("id", "theyAxispc") //initially hiding the Y axis
+		.attr("display", "none")
+		.call(yAxis)
+	.append("text")
+		.attr("class", "label2")
+		.attr("transform", "translate("+ (20-margin.left) +",25)")
+		.style("text-anchor", "middle")
+		.text("Revenue");
+</script>
+</div>
+</body>
+</html>

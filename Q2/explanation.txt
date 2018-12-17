@@ -1,0 +1,3 @@
+The node sizes have been scaled linearly based on their degree, which gives a good size contrast.
+Nodes can be dragged around by clicking and moving the mouse.
+Double click on a node to pin it. Pinned nodes have a dashed outline. Double click once again to unpin them.

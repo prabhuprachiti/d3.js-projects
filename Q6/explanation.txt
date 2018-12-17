@@ -1,0 +1,2 @@
+Bar chart showing the total revenue of various movies.
+Howering over a bar for a particular movie would display a line chart at the top right corner respresenting the revenue for individual installments for each of the movies.

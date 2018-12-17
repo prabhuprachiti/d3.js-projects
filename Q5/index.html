@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: white;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+.link {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+</style>
+<body>
+<script src="../lib/d3.v3.min.js"></script>
+<script>
+//adapted from https://bl.ocks.org/mbostock/4339083
+
+//setting up the margins
+var margin = {top: 20, right: 20, bottom: 20, left: 50};
+var width = 1000 - margin.right - margin.left;
+var height = 1000 - margin.top - margin.bottom;
+
+//creating the svg canvas	
+var svg = d3.select("body")
+			.append("svg")
+			.attr("width", width + margin.right + margin.left)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+			
+var tree = d3.layout.tree() //enforcing the tree layout of d3
+    .size([900, 700]);
+
+var diagonal = d3.svg.diagonal()
+    .projection(function(d) { return [d.y, d.x]; }); // to get the links from left to right
+
+d3.json("sushi.json", function(data) { //loading the file
+
+  root = data; //getting the data as root
+  root.x = 0;
+  root.y = 0;
+
+var collapse = function (d) { //this function stores all the children "d.children (expanded)" of a given node in a variable "d._children (collapsed)"
+    if (d.children) { 
+      d._children = d.children; //if the children nodes are in the expanded form, they are transferred to the collapsed form by calling the collapse function on the next line
+      d._children.forEach(collapse);
+      d.children = null; //all the expanded nodes are now collapsed and there are no expanded nodes
+    }
+  }
+  root.children.forEach(collapse); //calling the collapse function for root and updating it
+  update(root); //updating the root node to apply these changes
+});
+
+var update = function (source) {
+
+  //forming the tree with nodes and links data
+	var nodes = tree.nodes(root);
+	var links = tree.links(nodes);
+
+	var node = svg.selectAll(".node")
+		.data(nodes, function(d) { return d.id || (d.id = ++i); }); //creating a unique id for each node
+
+	var nodeEnter = node.enter().append("g")
+		.attr("class", "node")
+		.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+		.on("click", click) //calling the function to either expand or collapse on click based on its current state
+
+	nodeEnter.append("circle")
+		.attr("r", 5) //assigning a radius of 5 to each node
+		.style("fill", function(d) { if (d._children) {return "gray";} else { return "white"; }}) //if the node has collapsed children it will be coloured gray, else white
+			.on("mouseover", colorText) //calling the function to colour the node label and its ancestors' label on hover
+			.on("mouseout", decolorText); //calling the function to decolour the node label and its ancestors' label on hover out
+
+	nodeEnter.append("text")
+		.attr("x", function(d) { if (d.children) {return -10;} else {return 10;} }) //assigning positions for placement of text
+		.attr("y", function(d) { if (d.children) {return -10;} else {return 10;} })
+		.attr("font-size", function (d) {return (d.height*6 + 8)  + "px";}) //sizing the font inversely proportional to the node's depth (or directly proportional to its height)
+		.text(function(d) { return d.data.name; }) //getting the name of the node
+			.on("mouseover", colorText) //calling the function to colour the node label and its ancestors' label on hover
+			.on("mouseout", decolorText); //calling the function to decolour the node label and its ancestors' label on hover out
+	  
+	d3.selectAll("text").style("fill", function(d){ return d.color;}) //assigning colour to the node labels after the functions "colorText" or "decolorText" have been called
+	  
+	var nodeUpdate = node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; }); //getting the nodes to their new positions
+
+	nodeUpdate.select("circle")
+		.attr("r", 5)
+		.style("fill", function(d) { if (d._children) {return "gray";} else { return "white"; }}); //if the node has collapsed children it will be coloured gray, else white
+
+	var nodeExit = node.exit()
+		.remove(); //removing the nodes once they have "collapsed"
+
+	nodeExit.select("text")
+		.style("fill-opacity", 0); //removing the text associated with the collapsed node
+
+	var link = svg.selectAll("path.link")
+		.data(links, function(d) { return d.target.id; }); //updating the links with the new positions of the nodes
+
+	link.enter().insert("path", "g")
+		.attr("class", "link")
+		.attr("d", function(d) { //placing new links at the parent's position
+			var o = {x: source.x, y: source.y};
+			return diagonal({source: o, target: o});
+		});
+
+	link.attr("d", diagonal); //the path is assigned a value of diagonal
+
+	link.exit() //placing the new nodes at the parent's position
+		.attr("d", function(d) {
+			var o = {x: source.x, y: source.y};
+			return diagonal({source: o, target: o});
+		})
+    .remove();
+}
+
+var click = function (d) { //this function collapses or expands a node based on its current state
+  if (d.children) { //if there are expanded children they are collapsed
+    d._children = d.children;
+    d.children = null;
+  } else { //if there are collapsed children they are expanded
+    d.children = d._children;
+    d._children = null;
+  }
+  update(d); //updating the node to apply these changes
+};
+
+var colorText = function (d) { //function to colour the node label and all its ancestors' label blue on hover
+	d.color = "blue"; //colouring the text blue
+	if (d.parent !== null){ //calling the function recursively to colour all its ancestors' labels blue until it comes across a parentless ancestor (i.e. the root node "Sushi")
+	colorText(d.parent)
+	};
+	update(d) //updating the node to apply these changes
+};
+	
+var decolorText = function(d) { //function to decolour the node label and all its ancestors' label blue on hover
+	d.color = "black"; //colouring the text back to black
+	if (d.parent !== null){ //calling the function recursively to decolour all its ancestors' labels back to black until it comes across a parentless ancestor (i.e. the root node "Sushi")
+	decolorText(d.parent)
+	};
+	update(d) //updating the node to apply these changes
+};
+</script>
+</body>
